@@ -1,1 +1,317 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora NMS - Granjas Minerales</title>
+    <!-- Tailwind CSS para los estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons para los iconos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos base adicionales si son necesarios */
+        body {
+            background-color: #020617; /* slate-950 */
+            color: #e2e8f0; /* slate-200 */
+        }
+        /* Ocultar las flechas de los input type number en algunos navegadores */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 font-sans selection:bg-orange-500/30">
+
+    <!-- Header -->
+    <div class="max-w-6xl mx-auto mb-8 flex items-center gap-4 border-b border-slate-800 pb-6">
+        <div class="p-3 bg-orange-500 rounded-xl shadow-[0_0_15px_rgba(249,115,22,0.3)]">
+            <i data-lucide="database" class="w-8 h-8 text-slate-950"></i>
+        </div>
+        <div>
+            <h1 class="text-3xl font-bold text-white tracking-tight">NMS Calculadora de Extracción</h1>
+            <p class="text-slate-400 mt-1">Planificador de recursos para granjas minerales</p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Panel Izquierdo: Configuración -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Tarjeta de Pisos -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                            <i data-lucide="hammer" class="w-5 h-5 text-orange-500"></i>
+                            Magnitud del Proyecto
+                        </h2>
+                        <p class="text-sm text-slate-400 mt-1">¿Cuántos pisos o niveles de producción construirás?</p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                        <button id="btn-minus" class="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded-md text-white transition-colors">
+                            -
+                        </button>
+                        <input id="input-floors" type="number" value="1" min="1" class="w-16 bg-transparent text-center text-2xl font-bold text-white outline-none" />
+                        <button id="btn-plus" class="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded-md text-white transition-colors">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-3 mt-6 cursor-pointer group">
+                    <input id="check-unique" type="checkbox" checked class="w-5 h-5 rounded border-slate-700 text-orange-500 focus:ring-orange-500 bg-slate-950 cursor-pointer accent-orange-500" />
+                    <span class="text-sm text-slate-300 group-hover:text-white transition-colors">
+                        Solo 1 Ordenador Base, Teletransporte, Refinería y Cabaña en total (Recomendado)
+                    </span>
+                </label>
+            </div>
+
+            <!-- Tarjeta de Estructuras por piso -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="settings" class="w-5 h-5 text-blue-400"></i>
+                        Estructuras por Piso
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950/50 text-slate-400 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-medium">Estructura</th>
+                                <th class="p-4 font-medium text-center">Cant. por Piso</th>
+                            </tr>
+                        </thead>
+                        <tbody id="structures-table-body" class="divide-y divide-slate-800/50">
+                            <!-- Filas generadas por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Resultados -->
+        <div class="lg:col-span-5">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl sticky top-8">
+                <div class="p-6 border-b border-slate-800 bg-slate-800/20 rounded-t-2xl">
+                    <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="box" class="w-5 h-5 text-green-400"></i>
+                        Recursos Totales Necesarios
+                    </h2>
+                    <p id="floors-text" class="text-sm text-slate-400 mt-1">Para construir 1 piso</p>
+                </div>
+                
+                <div class="p-6">
+                    <div id="results-container" class="grid grid-cols-1 gap-3">
+                        <!-- Resultados generados por JS -->
+                    </div>
+
+                    <div id="empty-state" class="text-center py-10 text-slate-500 hidden">
+                        Ajusta las cantidades para ver los recursos.
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-slate-800">
+                        <div class="flex items-start gap-3 bg-blue-900/20 border border-blue-900/50 p-4 rounded-xl text-blue-200 text-sm">
+                            <i data-lucide="zap" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
+                            <p>
+                                <strong>Consejo de Viajero:</strong> Asegúrate de enlazar todas las tuberías de suministro a un solo depósito maestro cercano a tu zona de aterrizaje para recolectar todo de una sola vez.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Lógica de la aplicación -->
+    <script>
+        // Inicializar iconos de Lucide
+        lucide.createIcons();
+
+        // Datos iniciales
+        const initialStructures = [
+            { id: 1, name: "Ordenador Base", qty: 1, cost: { "Metal Cromático": 30 } },
+            { id: 2, name: "Módulo de Teletransporte", qty: 1, cost: { "Placas de Metal": 4, "Nanotubos de Carbono": 2, "Sodio": 40 } },
+            { id: 3, name: "Refinería Portátil", qty: 1, cost: { "Placas de Metal": 1, "Oxígeno": 30 } },
+            { id: 4, name: "Panel Solar", qty: 8, cost: { "Placas de Metal": 1, "Oro": 30, "Metal Cromático": 50 } },
+            { id: 5, name: "Batería", qty: 4, cost: { "Ferrita Imantada": 60, "Carbono Condensado": 100 } },
+            { id: 6, name: "Extractor de Minerales", qty: 4, cost: { "Placas de Metal": 5, "Metal Cromático": 100 } },
+            { id: 7, name: "Depósito de Suministro", qty: 7, cost: { "Placas de Metal": 10 } },
+            { id: 8, name: "Tubería de Suministro", qty: 10, cost: { "Polvo de Ferrita": 25, "Carbono": 10 } },
+            { id: 9, name: "Suelo de Construcción", qty: 8, cost: { "Carbono": 25 } },
+            { id: 10, name: "Cabaña Base (2x1)", qty: 1, cost: { "Carbono": 225, "Polvo de Ferrita": 10, "Placas de Metal": 2, "Oro": 60, "Metal Cromático": 100, "Ferrita Imantada": 60, "Carbono Condensado": 100 } }
+        ];
+
+        // Colores temáticos para los recursos
+        const resourceColors = {
+            "Metal Cromático": "text-purple-400 bg-purple-400/10 border-purple-400/20",
+            "Placas de Metal": "text-gray-300 bg-gray-500/10 border-gray-500/20",
+            "Nanotubos de Carbono": "text-gray-400 bg-gray-600/10 border-gray-600/20",
+            "Sodio": "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
+            "Oxígeno": "text-red-400 bg-red-400/10 border-red-400/20",
+            "Oro": "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
+            "Ferrita Imantada": "text-indigo-300 bg-indigo-400/10 border-indigo-400/20",
+            "Carbono Condensado": "text-red-500 bg-red-500/10 border-red-500/20",
+            "Polvo de Ferrita": "text-zinc-400 bg-zinc-400/10 border-zinc-400/20",
+            "Carbono": "text-red-600 bg-red-600/10 border-red-600/20",
+        };
+
+        // Estado de la aplicación
+        let state = {
+            floors: 1,
+            uniqueBaseEles: true,
+            structures: JSON.parse(JSON.stringify(initialStructures)) // Copia profunda
+        };
+
+        // Elementos del DOM
+        const domElements = {
+            btnMinus: document.getElementById('btn-minus'),
+            btnPlus: document.getElementById('btn-plus'),
+            inputFloors: document.getElementById('input-floors'),
+            checkUnique: document.getElementById('check-unique'),
+            tableBody: document.getElementById('structures-table-body'),
+            resultsContainer: document.getElementById('results-container'),
+            emptyState: document.getElementById('empty-state'),
+            floorsText: document.getElementById('floors-text')
+        };
+
+        // Funciones de renderizado
+        function renderTable() {
+            domElements.tableBody.innerHTML = '';
+            
+            state.structures.forEach(struct => {
+                const costHtml = Object.entries(struct.cost)
+                    .map(([res, amt]) => `<span>• ${amt} ${res}</span>`)
+                    .join('');
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/20 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-4">
+                        <div class="font-medium text-slate-200">${struct.name}</div>
+                        <div class="text-xs text-slate-500 mt-1 flex flex-wrap gap-2">
+                            ${costHtml}
+                        </div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <input
+                            type="number"
+                            data-id="${struct.id}"
+                            value="${struct.qty}"
+                            min="0"
+                            class="qty-input w-20 bg-slate-950 border border-slate-700 rounded-lg py-1.5 px-3 text-center text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all"
+                        />
+                    </td>
+                `;
+                domElements.tableBody.appendChild(tr);
+            });
+
+            // Agregar event listeners a los nuevos inputs
+            document.querySelectorAll('.qty-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val) || val < 0) val = 0;
+                    
+                    const struct = state.structures.find(s => s.id === id);
+                    if (struct) {
+                        struct.qty = val;
+                        calculateAndRenderResults();
+                    }
+                });
+            });
+        }
+
+        function calculateAndRenderResults() {
+            // Actualizar texto del header
+            domElements.floorsText.textContent = `Para construir ${state.floors} ${state.floors === 1 ? 'piso' : 'pisos'}`;
+
+            const totals = {};
+            const uniqueNames = ["Ordenador Base", "Módulo de Teletransporte", "Refinería Portátil", "Cabaña Base (2x1)"];
+
+            state.structures.forEach(struct => {
+                let multiplier = state.floors;
+                if (state.uniqueBaseEles && uniqueNames.includes(struct.name)) {
+                    multiplier = 1;
+                }
+
+                const totalStructures = struct.qty * multiplier;
+                
+                for (const [resource, amount] of Object.entries(struct.cost)) {
+                    if (!totals[resource]) totals[resource] = 0;
+                    totals[resource] += amount * totalStructures;
+                }
+            });
+
+            // Ordenar array
+            const sortedTotals = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+
+            // Renderizar resultados
+            domElements.resultsContainer.innerHTML = '';
+            
+            if (sortedTotals.length === 0) {
+                domElements.emptyState.classList.remove('hidden');
+            } else {
+                domElements.emptyState.classList.add('hidden');
+                
+                sortedTotals.forEach(([resource, amount]) => {
+                    const styleClass = resourceColors[resource] || "text-slate-300 bg-slate-800 border-slate-700";
+                    
+                    const div = document.createElement('div');
+                    div.className = `flex items-center justify-between p-4 rounded-xl border ${styleClass} backdrop-blur-sm`;
+                    div.innerHTML = `
+                        <span class="font-semibold tracking-wide">${resource}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl font-bold">${amount.toLocaleString()}</span>
+                        </div>
+                    `;
+                    domElements.resultsContainer.appendChild(div);
+                });
+            }
+        }
+
+        // Event Listeners principales
+        domElements.btnMinus.addEventListener('click', () => {
+            if (state.floors > 1) {
+                state.floors--;
+                domElements.inputFloors.value = state.floors;
+                calculateAndRenderResults();
+            }
+        });
+
+        domElements.btnPlus.addEventListener('click', () => {
+            state.floors++;
+            domElements.inputFloors.value = state.floors;
+            calculateAndRenderResults();
+        });
+
+        domElements.inputFloors.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value);
+            if (isNaN(val) || val < 1) {
+                val = 1;
+                e.target.value = 1;
+            }
+            state.floors = val;
+            calculateAndRenderResults();
+        });
+
+        domElements.checkUnique.addEventListener('change', (e) => {
+            state.uniqueBaseEles = e.target.checked;
+            calculateAndRenderResults();
+        });
+
+        // Inicialización
+        renderTable();
+        calculateAndRenderResults();
+    </script>
+</body>
+</html>
